@@ -23,6 +23,6 @@ ce1-connectivity:
     - network
 
   script:
-    - ansible CE1 -i inventory/hosts.yml
+    - ansible all -i inventory/hosts.yml
         -m ansible.netcommon.cli_command
         -a 'command="show version"'
