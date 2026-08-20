@@ -2,6 +2,7 @@ stages:
   - validate
   - connectivity
   - deploy
+  - verify
 
 ansible-validate:
   stage: validate
@@ -37,3 +38,11 @@ deploy-ospf:
 
   script:
     - ansible-playbook -i inventory/hosts.yml playbooks/ospf.yml
+
+verify-ospf:
+  stage: verify
+  tags:
+    - network
+
+  script:
+    - ansible all -i inventory/hosts.yml -m ansible.netcommon.cli_command -a 'command="show ip ospf neighbor"'
