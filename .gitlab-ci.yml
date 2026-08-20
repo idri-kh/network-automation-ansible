@@ -3,6 +3,10 @@ stages:
 
 ansible-test:
   stage: test
+
+  tags:
+    - network
+
   script:
     - echo "=== Ansible version ==="
     - ansible --version
