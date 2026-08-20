@@ -4,5 +4,11 @@ stages:
 ansible-test:
   stage: test
   script:
+    - echo "=== Ansible version ==="
     - ansible --version
+
+    - echo "=== Ansible collections ==="
+    - ansible-galaxy collection list
+
+    - echo "=== Inventory ==="
     - ansible-inventory -i inventory/hosts.yml --list
