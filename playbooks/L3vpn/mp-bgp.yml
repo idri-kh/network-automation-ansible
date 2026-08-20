@@ -1,0 +1,63 @@
+---
+- name: Configure MP-BGP VPNv4 on PE routers
+  hosts: pe_routers
+  gather_facts: false
+  connection: ansible.netcommon.network_cli
+
+  pre_tasks:
+
+    - name: Load host variables
+      ansible.builtin.include_vars:
+        file: "../../host_vars/{{ inventory_hostname }}.yml"
+
+  tasks:
+
+    - name: Activate RR neighbors for VPNv4
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+          - "address-family vpnv4"
+        lines:
+          - "neighbor {{ item.ip }} activate"
+          - "neighbor {{ item.ip }} send-community extended"
+      loop: "{{ bgp_rr_neighbors }}"
+      loop_control:
+        label: "{{ item.ip }}"
+
+    - name: Configure PE-CE BGP neighbors
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+          - "address-family ipv4 vrf {{ item.0.name }}"
+        lines:
+          - "neighbor {{ item.1.ip }} remote-as {{ item.1.remote_as }}"
+          - "neighbor {{ item.1.ip }} activate"
+          - "neighbor {{ item.1.ip }} send-community"
+      loop: "{{ vrfs | subelements('bgp_ce_neighbors') | default([]) }}"
+      loop_control:
+        label: "{{ item.0.name }} - {{ item.1.ip }}"
+
+
+- name: Configure MP-BGP VPNv4 on RR
+  hosts: route_reflectors
+  gather_facts: false
+  connection: ansible.netcommon.network_cli
+
+  pre_tasks:
+
+    - name: Load host variables
+      ansible.builtin.include_vars:
+        file: "../../host_vars/{{ inventory_hostname }}.yml"
+
+  tasks:
+
+    - name: Activate PE neighbors for VPNv4
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+          - "address-family vpnv4"
+        lines:
+          - "neighbor {{ item.ip }} activate"
+          - "neighbor {{ item.ip }} send-community extended"
+          - "neighbor {{ item.ip }} route-reflector-client"
+      loop: "{{ bgp_neighbors }}"

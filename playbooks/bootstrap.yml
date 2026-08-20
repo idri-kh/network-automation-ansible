@@ -1,0 +1,50 @@
+---
+- name: Bootstrap Cisco routers
+  hosts: all
+  gather_facts: false
+  connection: local
+
+  pre_tasks:
+
+    - name: Load host vars explicitly
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../host_vars/{{ inventory_hostname }}.yml"
+
+  tasks:
+
+    - name: Configure management interface and SSH
+      ansible.netcommon.telnet:
+        host: "{{ console_host }}"
+        port: "{{ console_port }}"
+        send_newline: true
+        login_prompt: ""
+        password_prompt: ""
+        prompts:
+          - "[>#]"
+        command:
+          - "enable"
+          - "configure terminal"
+
+          - "hostname {{ inventory_hostname }}"
+          - "interface {{ mgmt_interface.name }}"
+          - "description {{ mgmt_interface.description }}"
+          - "ip address {{ mgmt_interface.ip }} {{ mgmt_interface.mask }}"
+          - "no shutdown"
+          - "exit"
+
+          - "ip domain name isp_network.com"
+          - "crypto key generate rsa modulus 2048"
+          - "ip ssh version 2"
+          - "username idriss privilege 15 secret {{ lookup('env', 'BOOTSTRAP_PASSWORD') }}"
+          - "enable secret {{ lookup('env', 'BOOTSTRAP_PASSWORD') }}"
+          - "line vty 0 4"
+          - "login local"
+          - "transport input ssh telnet"
+          - "no banner login"
+          - "no banner exec"
+          - "no banner incoming"
+          - "exit"
+          - "end"
+          - "write memory"
+
+  timeout: 120

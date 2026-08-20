@@ -1,0 +1,31 @@
+---
+- name: Configure DHCP on CE routers
+  hosts: ce_routers
+  gather_facts: false
+
+  tasks:
+    - name: Load host variables
+      ansible.builtin.include_vars:
+        file: "../host_vars/{{ inventory_hostname }}.yml"
+
+    - name: Configure excluded addresses
+      cisco.ios.ios_config:
+        lines:
+          - >-
+            {{ 'ip dhcp excluded-address '
+               ~ (item.network | ansible.utils.ipaddr('1') | ansible.utils.ipaddr('address'))
+               ~ ' '
+               ~ (item.network | ansible.utils.ipaddr(item.excluded_end) | ansible.utils.ipaddr('address')) }}
+      loop: "{{ dhcp_pools }}"
+
+    - name: Configure DHCP pools
+      cisco.ios.ios_config:
+        parents: "ip dhcp pool {{ item.name }}"
+        lines:
+          - "network {{ item.network | ansible.utils.ipaddr('network') }} {{ item.network | ansible.utils.ipaddr('netmask') }}"
+          - "default-router {{ item.network | ansible.utils.ipaddr('1') | ansible.utils.ipaddr('address') }}"
+          - "dns-server {{ item.dns_server }}"
+          - "lease {{ item.lease_days | default(1) }} 0 0"
+      loop: "{{ dhcp_pools }}"
+      loop_control:
+        label: "{{ item.name }}"

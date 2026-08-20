@@ -1,0 +1,41 @@
+all:
+  hosts:
+    CE1:
+      console_host: 192.168.122.184
+      console_port: 32771
+
+    CE2:
+      console_host: 192.168.122.184
+      console_port: 32780
+
+    CE3:
+      console_host: 192.168.122.184
+      console_port: 32778
+
+    CE4:
+      console_host: 192.168.122.184
+      console_port: 32779
+
+    PE1:
+      console_host: 192.168.122.184
+      console_port: 32769
+
+    PE2:
+      console_host: 192.168.122.184
+      console_port: 32774
+
+    PE3:
+      console_host: 192.168.122.184
+      console_port: 32773
+
+    PE4:
+      console_host: 192.168.122.184
+      console_port: 32775
+
+    RR:
+      console_host: 192.168.122.184
+      console_port: 32776
+
+    P1:
+      console_host: 192.168.122.184
+      console_port: 32782

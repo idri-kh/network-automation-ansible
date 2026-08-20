@@ -1,0 +1,47 @@
+---
+- name: Configure CE BGP
+  hosts: ce_routers
+  gather_facts: false
+  connection: ansible.netcommon.network_cli
+
+  tasks:
+
+    - name: Load host variables
+      ansible.builtin.include_vars:
+        file: "../../host_vars/{{ inventory_hostname }}.yml"
+
+    - name: Configure BGP process
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+        lines:
+          - "bgp router-id {{ loopback_ip }}"
+          - "bgp log-neighbor-changes"
+
+    - name: Configure CE BGP neighbors
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+        lines:
+          - "neighbor {{ item.ip }} remote-as {{ item.remote_as }}"
+      loop: "{{ bgp_ce_neighbors }}"
+
+
+    - name: Configure IPv4 address family
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+          - "address-family ipv4"
+        lines:
+          - "network {{ item.prefix }} mask {{ item.mask }}"
+      loop: "{{ bgp_networks }}"
+
+
+    - name: Activate CE BGP neighbors
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+          - "address-family ipv4"
+        lines:
+          - "neighbor {{ item.ip }} activate"
+      loop: "{{ bgp_ce_neighbors }}"

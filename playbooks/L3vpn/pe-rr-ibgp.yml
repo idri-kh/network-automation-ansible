@@ -1,0 +1,80 @@
+---
+- name: Configure PE to RR iBGP
+  hosts: pe_routers
+  gather_facts: false
+  connection: ansible.netcommon.network_cli
+
+  tasks:
+
+    - name: Load host variables
+      ansible.builtin.include_vars:
+        file: "../../host_vars/{{ inventory_hostname }}.yml"
+
+    - name: Configure BGP process
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+        lines:
+          - "bgp router-id {{ loopback_ip }}"
+          - "bgp log-neighbor-changes"
+
+    - name: Configure RR neighbors
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+        lines:
+          - "neighbor {{ item.ip }} remote-as {{ item.remote_as }}"
+          - "neighbor {{ item.ip }} update-source Loopback0"
+      loop: "{{ bgp_rr_neighbors }}"
+      loop_control:
+        label: "{{ item.ip }}"
+
+    - name: Activate RR neighbors
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+          - "address-family ipv4"
+        lines:
+          - "neighbor {{ item.ip }} activate"
+      loop: "{{ bgp_rr_neighbors }}"
+      loop_control:
+        label: "{{ item.ip }}"
+
+
+- name: Configure RR
+  hosts: route_reflectors
+  gather_facts: false
+  connection: ansible.netcommon.network_cli
+
+  tasks:
+
+    - name: Load host variables
+      ansible.builtin.include_vars:
+        file: "../../host_vars/{{ inventory_hostname }}.yml"
+
+    - name: Configure BGP process
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+        lines:
+          - "bgp router-id {{ loopback_ip }}"
+          - "bgp log-neighbor-changes"
+
+    - name: Configure PE neighbors
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+        lines:
+          - "neighbor {{ item.ip }} remote-as {{ item.remote_as }}"
+          - "neighbor {{ item.ip }} update-source Loopback0"
+      loop: "{{ bgp_neighbors }}"
+
+    - name: Activate PE neighbors as route-reflector clients
+      cisco.ios.ios_config:
+        parents:
+          - "router bgp {{ bgp_as }}"
+          - "address-family ipv4"
+        lines:
+          - "neighbor {{ item.ip }} activate"
+          - "neighbor {{ item.ip }} route-reflector-client"
+      loop: "{{ bgp_neighbors }}"

@@ -1,0 +1,17 @@
+- name: Configure OSPF on PE routers and RR
+  hosts: pe_routers,route_reflectors,p_routers
+  gather_facts: false
+
+  pre_tasks:
+    - name: Load host-specific variables
+      ansible.builtin.include_vars: "{{ playbook_dir }}/../host_vars/{{ inventory_hostname }}.yml"
+
+  tasks:
+    - name: Configure OSPF process and networks
+      cisco.ios.ios_config:
+        lines:
+          - "network {{ item.prefix }} {{ item.wildcard }} area {{ item.area }}"
+        parents: "router ospf {{ ospf_process_id }}"
+      loop: "{{ ospf_networks }}"
+      loop_control:
+        label: "{{ item.prefix }}"

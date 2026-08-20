@@ -1,0 +1,38 @@
+---
+- name: Configure VRFs and VRF interfaces
+  hosts: pe_routers
+  gather_facts: false
+  connection: ansible.netcommon.network_cli
+
+  tasks:
+
+
+    - name: Load host variables
+      ansible.builtin.include_vars:
+        file: "../../host_vars/{{ inventory_hostname }}.yml"
+
+    - name: Configure VRFs
+      cisco.ios.ios_config:
+        parents:
+          - "ip vrf {{ item.name }}"
+        lines:
+          - "rd {{ item.rd }}"
+          - "route-target export {{ item.rt_export }}"
+          - "route-target import {{ item.rt_import }}"
+      loop: "{{ vrfs }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Configure VRF interfaces
+      cisco.ios.ios_config:
+        parents:
+          - "interface {{ item.name }}"
+        lines:
+          - "description {{ item.description }}"
+          - "ip vrf forwarding {{ item.vrf }}"
+          - "ip address {{ item.ip }} {{ item.mask }}"
+          - "no shutdown"
+      loop: "{{ interfaces }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: item.vrf is defined

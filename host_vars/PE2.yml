@@ -1,0 +1,84 @@
+---
+interfaces:
+  - name: Loopback0
+    ip: 2.2.2.2
+    mask: 255.255.255.255
+    description: LOOPBACK
+
+  - name: GigabitEthernet0/0
+    ip: 10.0.1.18
+    mask: 255.255.255.252
+    description: LINK-TO-CE3
+    vrf: Customer_B
+
+  - name: GigabitEthernet0/1
+    ip: 10.0.1.21
+    mask: 255.255.255.252
+    description: LINK-TO-RR
+    ospf-cost: 100
+
+  - name: GigabitEthernet0/3
+    ip: 10.0.3.2
+    mask: 255.255.255.252
+    description: LINK-TO-CE1
+    vrf: Customer_A
+
+  - name: GigabitEthernet0/4
+    ip: 10.0.2.5
+    mask: 255.255.255.252
+    description: LINK-TO-P1
+    ospf-cost: 10
+
+mgmt_interface:
+  name: GigabitEthernet0/2
+  ip: 192.168.122.12
+  mask: 255.255.255.0
+  description: MANAGEMENT
+
+loopback_ip: 2.2.2.2
+bgp_as: 65000
+ospf_process_id: 110
+ospf_networks:
+  - prefix: 2.2.2.2
+    wildcard: 0.0.0.0
+    area: 0
+  - prefix: 10.0.1.0
+    wildcard: 0.0.0.255
+    area: 0
+  - prefix: 10.0.2.0
+    wildcard: 0.0.0.255
+    area: 0
+
+bgp_rr_neighbors:
+  - ip: 5.5.5.5
+    remote_as: 65000
+bgp_neighbors:
+  - ip: 5.5.5.5
+    remote_as: 65000
+
+bgp_ce_neighbors:
+  - ip: 10.0.1.17
+    remote_as: 300
+
+mpls_interfaces:
+  - GigabitEthernet0/1
+  - GigabitEthernet0/4
+
+vrfs:
+  - name: Customer_B
+    rd: "65000:2"
+    rt_export: "65000:200"
+    rt_import: "65000:200"
+
+    bgp_ce_neighbors:
+      - ip: 10.0.1.17
+        remote_as: 300
+
+  - name: Customer_A
+    rd: "65000:1"
+    rt_export: "65000:100"
+    rt_import: "65000:100"
+
+    bgp_ce_neighbors:
+      - ip: 10.0.3.1
+        remote_as: 100

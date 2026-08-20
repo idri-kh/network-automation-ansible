@@ -1,0 +1,58 @@
+---
+interfaces:
+  - name: Loopback0
+    ip: 5.5.5.5
+    mask: 255.255.255.255
+    description: LOOPBACK
+
+  - name: GigabitEthernet0/0
+    ip: 10.0.1.6
+    mask: 255.255.255.252
+    description: LINK-TO-PE1
+
+  - name: GigabitEthernet0/1
+    ip: 10.0.1.22
+    mask: 255.255.255.252
+    description: LINK-TO-PE2
+
+  - name: GigabitEthernet0/2
+    ip: 10.0.1.9
+    mask: 255.255.255.252
+    description: LINK-TO-PE3
+
+  - name: GigabitEthernet0/3
+    ip: 10.0.1.25
+    mask: 255.255.255.252
+    description: LINK-TO-PE4
+
+mgmt_interface:
+  name: GigabitEthernet0/4
+  ip: 192.168.122.15
+  mask: 255.255.255.0
+  description: MANAGEMENT
+
+loopback_ip: 5.5.5.5
+bgp_as: 65000
+ospf_process_id: 110
+ospf_networks:
+  - prefix: 5.5.5.5
+    wildcard: 0.0.0.0
+    area: 0
+  - prefix: 10.0.1.0
+    wildcard: 0.0.0.255
+    area: 0
+bgp_neighbors:
+  - ip: 1.1.1.1
+    remote_as: 65000
+  - ip: 2.2.2.2
+    remote_as: 65000
+  - ip: 3.3.3.3
+    remote_as: 65000
+  - ip: 4.4.4.4
+    remote_as: 65000
+
+mpls_interfaces:
+  - GigabitEthernet0/0
+  - GigabitEthernet0/1
+  - GigabitEthernet0/2
+  - GigabitEthernet0/3

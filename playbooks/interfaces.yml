@@ -1,0 +1,24 @@
+---
+- name: Configure hostname, loopback and physical interfaces
+  hosts: ce_routers,pe_routers,route_reflectors, p_routers
+  connection: ansible.netcommon.network_cli
+  gather_facts: false
+
+  tasks:
+
+    - name: Load host variables
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../host_vars/{{ inventory_hostname }}.yml"
+
+
+    - name: Configure interfaces (IP, description, no shutdown)
+      cisco.ios.ios_config:
+        parents: "interface {{ item.name }}"
+        lines:
+          - "description {{ item.description | default('CONFIGURED-BY-ANSIBLE') }}"
+          - "ip address {{ item.ip }} {{ item.mask }}"
+          - "ip ospf cost {{ item.ospf_cost | default(10) }}"
+          - "no shutdown"
+      loop: "{{ hostvars[inventory_hostname]['interfaces'] | default([]) }}"
+      loop_control:
+        label: "{{ inventory_hostname }} → {{ item.name }} ({{ item.ip }})"

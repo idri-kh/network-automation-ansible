@@ -1,0 +1,22 @@
+# Ansible
+*.retry
+.ansible/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secrets
+*.secret
+*.vault
+vault-password-file
+
+# SSH
+*.pem
+*.key
+
+# OS/editor
+.DS_Store
+.vscode/

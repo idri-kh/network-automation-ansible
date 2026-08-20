@@ -1,0 +1,30 @@
+---
+- name: Configure MPLS and LDP on backbone
+  hosts: pe_routers,route_reflectors
+  gather_facts: false
+
+  tasks:
+
+    - name: Load host variables
+      ansible.builtin.include_vars:
+        file: "../host_vars/{{ inventory_hostname }}.yml"
+
+    - name: Enable CEF
+      cisco.ios.ios_config:
+        lines:
+          - ip cef
+
+    - name: Configure LDP
+      cisco.ios.ios_config:
+        lines:
+          - mpls label protocol ldp
+          - mpls ldp router-id Loopback0 force
+
+    - name: Enable MPLS on backbone interfaces
+      cisco.ios.ios_config:
+        parents: "interface {{ item }}"
+        lines:
+          - mpls ip
+      loop: "{{ mpls_interfaces }}"
+      loop_control:
+        label: "{{ item }}"

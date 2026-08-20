@@ -1,0 +1,8 @@
+stages:
+  - test
+
+ansible-test:
+  stage: test
+  script:
+    - ansible --version
+    - ansible-inventory -i inventory/hosts.yml --list

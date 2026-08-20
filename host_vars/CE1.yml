@@ -1,0 +1,47 @@
+interfaces:
+  - name: Loopback0
+    ip: 11.11.11.11
+    mask: 255.255.255.255
+    description: LOOPBACK
+
+  - name: GigabitEthernet0/1
+    ip: 10.10.1.1
+    mask: 255.255.255.0
+    description: LINK-TO-Client1
+
+  - name: GigabitEthernet0/2
+    ip: 10.0.1.1
+    mask: 255.255.255.252
+    description: LINK-TO-PE1
+
+  - name: GigabitEthernet0/3
+    ip: 10.0.3.1
+    mask: 255.255.255.252
+    description: LINK-TO-PE2
+
+mgmt_interface:
+  name: GigabitEthernet0/0
+  ip: 192.168.122.10
+  mask: 255.255.255.0
+  description: MANAGEMENT
+
+bgp_as: 100
+loopback_ip: 11.11.11.11
+bgp_ce_neighbors:
+  - ip: 10.0.1.2
+    remote_as: 65000
+
+  - ip: 10.0.3.2
+    remote_as: 65000
+
+bgp_networks:
+  - prefix: 10.10.1.0
+    mask: 255.255.255.0
+
+
+dhcp_pools:
+  - name: LAN1
+    network: 10.10.1.0/24
+    excluded_end: 10          # excludes .1–.10
+    dns_server: 192.168.122.1  # replace with internal DNS if available
+    lease_days: 1
