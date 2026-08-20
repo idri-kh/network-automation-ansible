@@ -1,6 +1,7 @@
 stages:
   - validate
   - connectivity
+  - deploy
 
 ansible-validate:
   stage: validate
@@ -17,7 +18,7 @@ ansible-validate:
     - ansible-playbook --syntax-check playbooks/L3vpn/pe-rr-ibgp.yml
     - ansible-playbook --syntax-check playbooks/L3vpn/mp-bgp.yml
 
-ce1-connectivity:
+network-connectivity:
   stage: connectivity
   tags:
     - network
@@ -26,3 +27,13 @@ ce1-connectivity:
     - ansible all -i inventory/hosts.yml
         -m ansible.netcommon.cli_command
         -a 'command="show version"'
+
+deploy-ospf:
+  stage: deploy
+  tags:
+    - network
+
+  when: manual
+
+  script:
+    - ansible-playbook -i inventory/hosts.yml playbooks/ospf.yml
