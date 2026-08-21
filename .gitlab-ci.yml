@@ -37,7 +37,14 @@ deploy-ospf:
   when: manual
 
   script:
+    - ansible-playbook -i inventory/hosts.yml playbooks/interfaces.yml
     - ansible-playbook -i inventory/hosts.yml playbooks/ospf.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/mpls.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/VRFs.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/ce-ebgp.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/pe-rr-ibgp.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/mp-bgp.yml
+
 
 verify-ospf:
   stage: verify
