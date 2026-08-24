@@ -66,7 +66,7 @@
 
     - name: Load expected customer routes
       ansible.builtin.include_vars:
-        file: "../group_vars/l3vpn.yml"
+        file: "../../group_vars/l3vpn.yml"
 
     - name: Collect IP routing table
       cisco.ios.ios_command:
