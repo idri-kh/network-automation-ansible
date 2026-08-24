@@ -1,0 +1,128 @@
+---
+# verify_ospf.yml
+# OSPF verification for the ISP provider network
+
+- name: Verify OSPF
+  hosts: p_routers,pe_routers,route_reflectors
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+
+
+    - name: Collect OSPF information
+      cisco.ios.ios_command:
+        commands:
+          - show ip ospf
+          - show ip ospf neighbor
+          - show ip route ospf
+      register: ospf_output
+
+
+    - name: Display OSPF information
+      ansible.builtin.debug:
+        msg: |
+          ==========================================
+          {{ inventory_hostname }} — OSPF
+          ==========================================
+
+          --- OSPF PROCESS ---
+          {{ ospf_output.stdout[0] }}
+
+          --- OSPF NEIGHBORS ---
+          {{ ospf_output.stdout[1] }}
+
+          --- OSPF ROUTES ---
+          {{ ospf_output.stdout[2] }}
+
+
+    - name: Load host variables
+      ansible.builtin.include_vars:
+        file: "../../group_vars/ospf.yml"
+
+    - name: Verify OSPF process
+      ansible.builtin.assert:
+        that:
+          - "'Routing Process \"ospf ' ~ ospf_process_id|string ~ '\"' in ospf_output.stdout[0]"
+        fail_msg: >-
+          FAIL [OSPF PROCESS]
+          OSPF process {{ ospf_process_id }}
+          is not running on {{ inventory_hostname }}
+        success_msg: >-
+          PASS [OSPF PROCESS]
+          OSPF process {{ ospf_process_id }}
+          is running on {{ inventory_hostname }}
+
+
+    - name: Count FULL OSPF neighbors
+      ansible.builtin.set_fact:
+        ospf_full_count: >-
+          {{ ospf_output.stdout[1] | regex_findall('FULL') | length }}
+
+    - name: Display FULL neighbor count
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }} has
+          {{ ospf_full_count }} FULL OSPF adjacency/adjacencies
+
+
+    - name: Verify OSPF FULL neighbors
+      ansible.builtin.assert:
+        that:
+          - ospf_full_count | int >= (expected_ospf_neighbors[inventory_hostname] | length)
+        fail_msg: >-
+          FAIL [OSPF NEIGHBORS]
+          {{ inventory_hostname }} expected
+          {{ expected_ospf_neighbors[inventory_hostname] | length }}
+          FULL neighbor(s), but only
+          {{ ospf_full_count }} found
+        success_msg: >-
+          PASS [OSPF NEIGHBORS]
+          Expected FULL adjacencies are present on
+          {{ inventory_hostname }}
+
+
+    - name: Verify OSPF neighbors are stable
+      ansible.builtin.assert:
+        that:
+          - ospf_output.stdout[1] |
+            regex_search('EXSTART|EXCHANGE|LOADING') is none
+        fail_msg: >-
+          FAIL [OSPF STATE]
+          Neighbor stuck in EXSTART/EXCHANGE/LOADING
+          on {{ inventory_hostname }}
+        success_msg: >-
+          PASS [OSPF STATE]
+          No OSPF neighbors are stuck on
+          {{ inventory_hostname }}
+
+
+    - name: Verify expected OSPF neighbors
+      ansible.builtin.assert:
+        that:
+          - item in ospf_output.stdout[1]
+        fail_msg: >-
+          FAIL [OSPF TOPOLOGY]
+          Expected OSPF neighbor {{ item }}
+          not found on {{ inventory_hostname }}
+        success_msg: >-
+          PASS [OSPF TOPOLOGY]
+          Expected OSPF neighbor {{ item }}
+          found on {{ inventory_hostname }}
+      loop: "{{ expected_ospf_neighbors[inventory_hostname] }}"
+
+
+    - name: Verify provider loopbacks
+      ansible.builtin.assert:
+        that:
+          - item in ospf_output.stdout[2]
+        fail_msg: >-
+          FAIL [OSPF ROUTES]
+          Loopback {{ item }}
+          is not present in OSPF routes on
+          {{ inventory_hostname }}
+        success_msg: >-
+          PASS [OSPF ROUTES]
+          Loopback {{ item }}
+          is present in OSPF routes
+      loop: "{{ expected_ospf_loopbacks[inventory_hostname] }}"

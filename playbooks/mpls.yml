@@ -1,6 +1,6 @@
 ---
 - name: Configure MPLS and LDP on backbone
-  hosts: pe_routers,route_reflectors
+  hosts: pe_routers,route_reflectors,p_routers
   gather_facts: false
 
   tasks:

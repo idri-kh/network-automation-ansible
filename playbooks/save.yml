@@ -4,13 +4,7 @@
   gather_facts: false
 
   tasks:
-    - name: remove banner from devices
-      cisco.ios.ios_config:
-        lines:
-          - no banner login
-          - no banner exec
-          - no banner incoming
-        
+
     - name: Save configuration
-      cisco.ios.ios_config: 
+      cisco.ios.ios_config:
         save_when: always

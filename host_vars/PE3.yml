@@ -80,3 +80,34 @@ vrfs:
     bgp_ce_neighbors:
       - ip: 10.0.3.10
         remote_as: 400
+
+path_control_prefix_lists:
+
+  - name: CE1-ROUTES
+    prefix: 10.10.1.0/24
+
+  - name: CE3-ROUTES
+    prefix: 10.10.2.0/24
+
+
+path_control_route_maps:
+
+  - name: Customer-B-BACKUP
+    lines:
+      - "match ip address prefix-list CE3-ROUTES"
+      - "set as-path prepend 65000 65000"
+
+  - name: Customer-A-PRIMARY
+    lines:
+      - "match ip address prefix-list CE1-ROUTES"
+
+
+path_control_neighbors:
+
+  - vrf: Customer_A
+    neighbor: 10.0.1.14
+    route_map: Customer-A-PRIMARY
+
+  - vrf: Customer_B
+    neighbor: 10.0.3.10
+    route_map: Customer-B-BACKUP

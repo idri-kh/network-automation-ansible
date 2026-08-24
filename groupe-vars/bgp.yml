@@ -1,0 +1,22 @@
+---
+# BGP verification variables
+
+bgp_global_neighbors:
+
+  PE1:
+    - 5.5.5.5
+
+  PE2:
+    - 5.5.5.5
+
+  PE3:
+    - 5.5.5.5
+
+  PE4:
+    - 5.5.5.5
+
+  RR:
+    - 1.1.1.1
+    - 2.2.2.2
+    - 3.3.3.3
+    - 4.4.4.4

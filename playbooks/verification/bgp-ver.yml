@@ -1,0 +1,94 @@
+---
+
+
+- name: Verify normal BGP
+  hosts: pe_routers,route_reflectors
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+
+
+    - name: Collect BGP summary
+      cisco.ios.ios_command:
+        commands:
+          - show ip bgp summary
+      register: bgp_output
+
+
+    - name: Display BGP summary
+      ansible.builtin.debug:
+        msg: |
+          ==========================================
+          {{ inventory_hostname }} — BGP
+          ==========================================
+
+          {{ bgp_output.stdout[0] }}
+
+
+    - name: Verify BGP process is running
+      ansible.builtin.assert:
+        that:
+          - "'BGP router identifier' in bgp_output.stdout[0]"
+        fail_msg: >-
+          FAIL [BGP PROCESS] —
+          BGP process is not running on {{ inventory_hostname }}
+        success_msg: >-
+          PASS [BGP PROCESS] —
+          BGP process is running on {{ inventory_hostname }}
+
+
+    - name: Load host variables
+      ansible.builtin.include_vars:
+        file: "../../group_vars/bgp.yml"
+
+    - name: Verify expected BGP neighbors exist
+      ansible.builtin.assert:
+        that:
+          - item in bgp_output.stdout[0]
+        fail_msg: >-
+          FAIL [BGP TOPOLOGY] —
+          Expected BGP neighbor {{ item }}
+          was not found on {{ inventory_hostname }}
+        success_msg: >-
+          PASS [BGP TOPOLOGY] —
+          Expected BGP neighbor {{ item }}
+          found on {{ inventory_hostname }}
+      loop: "{{ bgp_global_neighbors[inventory_hostname] }}"
+
+
+    - name: Verify BGP sessions are established
+      ansible.builtin.assert:
+        that:
+          - bgp_neighbor_line | length > 0
+          - bgp_state | regex_search('^[0-9]+$')
+        fail_msg: >-
+          FAIL [BGP SESSION] —
+          BGP neighbor {{ item }} is not established
+          on {{ inventory_hostname }}.
+          State/PfxRcd: {{ bgp_state | default('NOT FOUND') }}
+        success_msg: >-
+          PASS [BGP SESSION] —
+          BGP neighbor {{ item }} is established
+          on {{ inventory_hostname }}.
+          State/PfxRcd: {{ bgp_state }}
+      vars:
+        bgp_neighbor_line: >-
+          {{
+            bgp_output.stdout[0].splitlines()
+            | select('search', item)
+            | list
+            | first
+            | default('')
+          }}
+
+        bgp_state: >-
+          {{
+            bgp_neighbor_line.split()[-1]
+            if bgp_neighbor_line | length > 0
+            else ''
+          }}
+
+      loop: "{{ bgp_global_neighbors[inventory_hostname] }}"
+      loop_control:
+        label: "{{ item }}"

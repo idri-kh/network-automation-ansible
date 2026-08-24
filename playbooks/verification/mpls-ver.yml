@@ -1,0 +1,92 @@
+---
+- name: Verify MPLS and LDP
+  hosts: pe_routers:route_reflectors:p_routers
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+
+    - name: Collect LDP neighbors
+      cisco.ios.ios_command:
+        commands:
+          - show mpls ldp neighbor
+      register: ldp_output
+
+    - name: Display LDP neighbors
+      ansible.builtin.debug:
+        msg: |
+          ==========================================
+          {{ inventory_hostname }} — MPLS/LDP
+          ==========================================
+
+          {{ ldp_output.stdout[0] }}
+
+
+    - name: Verify LDP is running
+      ansible.builtin.assert:
+        that:
+          - "'Local LDP Ident' in ldp_output.stdout[0]"
+          - "'Peer LDP Ident' in ldp_output.stdout[0]"
+        fail_msg: >-
+          FAIL [LDP PROCESS] —
+          LDP does not appear to be running on
+          {{ inventory_hostname }}
+        success_msg: >-
+          PASS [LDP PROCESS] —
+          LDP is running on
+          {{ inventory_hostname }}
+
+
+    - name: Load expected LDP neighbors
+      ansible.builtin.include_vars:
+        file: "../../group_vars/mpls.yml"
+
+    - name: Verify expected LDP neighbors
+      ansible.builtin.assert:
+        that:
+          - item in ldp_output.stdout[0]
+        fail_msg: >-
+          FAIL [LDP NEIGHBOR] —
+          Expected LDP neighbor {{ item }}
+          was not found on {{ inventory_hostname }}
+
+        success_msg: >-
+          PASS [LDP NEIGHBOR] —
+          Expected LDP neighbor {{ item }}
+          found on {{ inventory_hostname }}
+
+      loop: "{{ ldp_neighbors[inventory_hostname] }}"
+
+
+    - name: Collect MPLS forwarding table
+      cisco.ios.ios_command:
+        commands:
+          - show mpls forwarding-table
+      register: mpls_table
+
+    - name: Display MPLS forwarding table
+      ansible.builtin.debug:
+        msg: |
+          ==========================================
+          {{ inventory_hostname }} — MPLS FORWARDING
+          ==========================================
+
+          {{ mpls_table.stdout[0] }}
+
+    - name: Verify MPLS forwarding table contains core labels
+      ansible.builtin.assert:
+        that:
+          - item in mpls_table.stdout[0]
+        fail_msg: >-
+          FAIL [MPLS FORWARDING] —
+          Expected core prefix {{ item }}
+          was not found in the MPLS forwarding table
+          on {{ inventory_hostname }}
+
+        success_msg: >-
+          PASS [MPLS FORWARDING] —
+          Core prefix {{ item }}
+          has MPLS forwarding information
+          on {{ inventory_hostname }}
+
+      loop: "{{ mpls_core_prefixes[inventory_hostname] }}"

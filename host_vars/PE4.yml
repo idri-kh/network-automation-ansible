@@ -18,7 +18,7 @@ interfaces:
     ospf-cost: 100
 
   - name: GigabitEthernet0/3
-    ip: 10.0.3.14
+    ip: 10.0.3.13
     mask: 255.255.255.252
     description: LINK-TO-CE2
     vrf: Customer_A
@@ -81,3 +81,33 @@ vrfs:
     bgp_ce_neighbors:
       - ip: 10.0.3.14
         remote_as: 200
+
+path_control_prefix_lists:
+
+  - name: CE1-ROUTES
+    prefix: 10.10.1.0/24
+
+  - name: CE3-ROUTES
+    prefix: 10.10.2.0/24
+
+path_control_route_maps:
+
+  - name: Customer-A-BACKUP
+    lines:
+      - "match ip address prefix-list CE1-ROUTES"
+      - "set as-path prepend 65000 65000"
+
+  - name: Customer-B-PRIMARY
+    lines:
+      - "match ip address prefix-list CE3-ROUTES"
+
+
+path_control_neighbors:
+
+  - vrf: Customer_A
+    neighbor: 10.0.3.14
+    route_map: Customer-A-BACKUP
+
+  - vrf: Customer_B
+    neighbor: 10.0.1.30
+    route_map: Customer-B-PRIMARY

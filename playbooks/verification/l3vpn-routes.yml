@@ -1,0 +1,101 @@
+---
+
+- name: Verify L3VPN remote routes on PE routers
+  hosts: pe_routers
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+
+    - name: Load expected customer routes
+      ansible.builtin.include_vars:
+        file: "../../group_vars/l3vpn.yml"
+
+
+    - name: Collect Customer_A routing table
+      cisco.ios.ios_command:
+        commands:
+          - show ip route vrf Customer_A
+      register: customer_a_routes
+
+    - name: Verify Customer_A remote route
+      ansible.builtin.assert:
+        that:
+          - customer_a_expected_route[inventory_hostname] in customer_a_routes.stdout[0]
+        fail_msg: >-
+          FAIL [L3VPN Customer_A] —
+          Expected remote route
+          {{ customer_a_expected_route[inventory_hostname] }}
+          was not found on {{ inventory_hostname }}
+
+        success_msg: >-
+          PASS [L3VPN Customer_A] —
+          Remote route
+          {{ customer_a_expected_route[inventory_hostname] }}
+          found on {{ inventory_hostname }}
+
+
+    - name: Collect Customer_B routing table
+      cisco.ios.ios_command:
+        commands:
+          - show ip route vrf Customer_B
+      register: customer_b_routes
+
+    - name: Verify Customer_B remote route
+      ansible.builtin.assert:
+        that:
+          - customer_b_expected_route[inventory_hostname] in customer_b_routes.stdout[0]
+        fail_msg: >-
+          FAIL [L3VPN Customer_B] —
+          Expected remote route
+          {{ customer_b_expected_route[inventory_hostname] }}
+          was not found on {{ inventory_hostname }}
+
+        success_msg: >-
+          PASS [L3VPN Customer_B] —
+          Remote route
+          {{ customer_b_expected_route[inventory_hostname] }}
+          found on {{ inventory_hostname }}
+
+- name: Verify CE customer routes
+  hosts: ce_routers
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+
+    - name: Load expected customer routes
+      ansible.builtin.include_vars:
+        file: "../group_vars/l3vpn.yml"
+
+    - name: Collect IP routing table
+      cisco.ios.ios_command:
+        commands:
+          - show ip route
+      register: routing_table
+
+    - name: Display routing table
+      ansible.builtin.debug:
+        msg: |
+          ==========================================
+          {{ inventory_hostname }} — CUSTOMER ROUTES
+          ==========================================
+
+          {{ routing_table.stdout[0] }}
+
+    - name: Verify routes to remote customer networks
+      ansible.builtin.assert:
+        that:
+          - item in routing_table.stdout[0]
+
+        fail_msg: >-
+          FAIL [CUSTOMER ROUTE] —
+          {{ inventory_hostname }} does not have a route to
+          {{ item }}
+
+        success_msg: >-
+          PASS [CUSTOMER ROUTE] —
+          {{ inventory_hostname }} has a route to
+          {{ item }}
+
+      loop: "{{ expected_network[inventory_hostname] }}"

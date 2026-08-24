@@ -1,0 +1,35 @@
+---
+- name: Configure L3VPN path control
+  hosts: pe_routers
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+
+    - name: Load host-specific variables
+      ansible.builtin.include_vars:
+        "../../host_vars/{{ inventory_hostname }}.yml"
+
+    - name: Configure path-control prefix lists
+      cisco.ios.ios_config:
+        lines:
+          - "ip prefix-list {{ item.name }} seq 5 permit {{ item.prefix }}"
+      loop: "{{ path_control_prefix_lists }}"
+
+
+    - name: Configure path-control route maps
+      cisco.ios.ios_config:
+        lines: "{{ item.lines }}"
+        parents:
+          - "route-map {{ item.name }} permit 10"
+      loop: "{{ path_control_route_maps }}"
+
+
+    - name: Apply path-control route maps
+      cisco.ios.ios_config:
+        lines:
+          - "neighbor {{ item.neighbor }} route-map {{ item.route_map }} out"
+        parents:
+          - "router bgp {{ bgp_as }}"
+          - "address-family ipv4 vrf {{ item.vrf }}"
+      loop: "{{ path_control_neighbors }}"

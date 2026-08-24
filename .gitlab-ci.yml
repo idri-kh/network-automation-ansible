@@ -44,6 +44,7 @@ deploy-ospf:
     - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/ce-ebgp.yml
     - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/pe-rr-ibgp.yml
     - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/mp-bgp.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/path-control.yml
 
 
 verify-ospf:
@@ -52,4 +53,28 @@ verify-ospf:
     - network
 
   script:
-    - ansible all -i inventory/hosts.yml -m ansible.netcommon.cli_command -a 'command="show ip ospf neighbor"'
+    - ansible-playbook -i inventory/hosts.yml playbooks/verification/ospf-ver.yml
+
+mpls-verification:
+  stage: verify
+  tags:
+    - network
+
+  script:
+    - ansible-playbook -i inventory/hosts.yml playbooks/verification/mpls-ver.yml
+
+bgp-verification:
+  stage: verify
+  tags:
+    - network
+
+  script:
+    - ansible-playbook -i inventory/hosts.yml playbooks/verification/bgp-ver.yml
+
+l3vpn-routes-verification:
+  stage: verify
+  tags:
+    - network
+
+  script:
+    - ansible-playbook -i inventory/hosts.yml playbooks/verification/l3vpn-routes.yml
