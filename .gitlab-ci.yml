@@ -29,15 +29,44 @@ network-connectivity:
         -m ansible.netcommon.cli_command
         -a 'command="show version"'
 
-deploy-ospf:
+interfaces-config:
   stage: deploy
   tags:
     - network
 
   script:
     - ansible-playbook -i inventory/hosts.yml playbooks/interfaces.yml
+
+DHCP-config:
+  stage: deploy
+  tags:
+    - network
+
+  script:
+    - ansible-playbook -i inventory/hosts.yml playbooks/dhcp.yml
+
+ospf-config:
+  stage: deploy
+  tags:
+    - network
+
+  script:
     - ansible-playbook -i inventory/hosts.yml playbooks/ospf.yml
+
+mpls-config:
+  stage: deploy
+  tags:
+    - network
+
+  script:
     - ansible-playbook -i inventory/hosts.yml playbooks/mpls.yml
+
+L3vpn-config:
+  stage: deploy
+  tags:
+    - network
+
+  script:
     - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/VRFs.yml
     - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/ce-ebgp.yml
     - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/pe-rr-ibgp.yml
