@@ -34,8 +34,6 @@ deploy-ospf:
   tags:
     - network
 
-  when: manual
-
   script:
     - ansible-playbook -i inventory/hosts.yml playbooks/interfaces.yml
     - ansible-playbook -i inventory/hosts.yml playbooks/ospf.yml
