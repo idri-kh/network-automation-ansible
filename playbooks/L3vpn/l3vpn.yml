@@ -1,5 +1,0 @@
----
-- import_playbook: playbooks/L3vpn/ce-ebgp.yml
-- import_playbook: playbooks/L3vpn/pe-rr-ibgp.yml
-- import_playbook: playbooks/L3vpn/VRFs.yml
-- import_playbook: playbooks/L3vpn/mp-bgp.yml
