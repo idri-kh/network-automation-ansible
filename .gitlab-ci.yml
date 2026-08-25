@@ -4,6 +4,6 @@ stages:
 ansible-lint:
   stage: lint
   tags:
-    - network-automation
+    - network
   script:
     - /opt/ansible-lint/bin/ansible-lint playbooks/
