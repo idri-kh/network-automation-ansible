@@ -1,9 +1,87 @@
 stages:
   - lint
-
+  - validate
+  - connectivity
+  - deploy
+  - verify
+  
+  
 ansible-lint:
   stage: lint
   tags:
     - network
   script:
     - /opt/ansible-lint/bin/ansible-lint playbooks/
+    
+
+ansible-validate:
+  stage: validate
+  tags:
+    - network
+
+  script:
+    - ansible --version
+    - ansible-inventory -i inventory/hosts.yml --list
+    - ansible-playbook --syntax-check playbooks/ospf.yml
+    - ansible-playbook --syntax-check playbooks/mpls.yml
+    - ansible-playbook --syntax-check playbooks/L3vpn/VRFs.yml
+    - ansible-playbook --syntax-check playbooks/L3vpn/ce-ebgp.yml
+    - ansible-playbook --syntax-check playbooks/L3vpn/pe-rr-ibgp.yml
+    - ansible-playbook --syntax-check playbooks/L3vpn/mp-bgp.yml
+
+network-connectivity:
+  stage: connectivity
+  tags:
+    - network
+
+  script:
+    - ansible all -i inventory/hosts.yml -m ansible.netcommon.cli_command -a 'command="show version"'
+  
+Network-deploy:
+  stage: deploy
+  tags:
+    - network
+
+  script:
+    - ansible-playbook -i inventory/hosts.yml playbooks/interfaces.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/dhcp.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/ospf.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/mpls.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/VRFs.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/ce-ebgp.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/pe-rr-ibgp.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/mp-bgp.yml
+    - ansible-playbook -i inventory/hosts.yml playbooks/L3vpn/path-control.yml
+
+
+verify-ospf:
+  stage: verify
+  tags:
+    - network
+
+  script:
+    - ansible-playbook -i inventory/hosts.yml playbooks/verification/ospf-ver.yml
+
+mpls-verification:
+  stage: verify
+  tags:
+    - network
+
+  script:
+    - ansible-playbook -i inventory/hosts.yml playbooks/verification/mpls-ver.yml
+
+bgp-verification:
+  stage: verify
+  tags:
+    - network
+
+  script:
+    - ansible-playbook -i inventory/hosts.yml playbooks/verification/bgp-ver.yml
+
+l3vpn-routes-verification:
+  stage: verify
+  tags:
+    - network
+
+  script:
+    - ansible-playbook -i inventory/hosts.yml playbooks/verification/l3vpn-routes.yml
