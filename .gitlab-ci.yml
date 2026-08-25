@@ -1,25 +1,17 @@
 stages:
-  - lint
   - validate
   - connectivity
   - deploy
   - verify
   
-  
-ansible-lint:
-  stage: lint
-  tags:
-    - network
-  script:
-    - /opt/ansible-lint/bin/ansible-lint playbooks/
     
-
 ansible-validate:
   stage: validate
   tags:
     - network
 
   script:
+    - /opt/ansible-lint/bin/ansible-lint playbooks/
     - ansible --version
     - ansible-inventory -i inventory/hosts.yml --list
     - ansible-playbook --syntax-check playbooks/ospf.yml
